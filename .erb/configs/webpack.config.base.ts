@@ -4,14 +4,13 @@
 
 import path from 'path';
 import webpack from 'webpack';
+import dotenv from 'dotenv';
 import TsconfigPathsPlugins from 'tsconfig-paths-webpack-plugin';
 import webpackPaths from './webpack.paths';
 import { dependencies as externals } from '../../release/app/package.json';
 
 // Load .env file (if present) into process.env so EnvironmentPlugin can
 // substitute Firebase config values at build time.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const dotenv = require('dotenv');
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const configuration: webpack.Configuration = {
