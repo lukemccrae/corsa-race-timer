@@ -4,6 +4,7 @@ import {
   PropsWithChildren,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 import {
@@ -50,11 +51,16 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     await firebaseSignOut(firebaseAuth);
   };
 
+  const value = useMemo(
+    () => ({ user, loading, signIn, signUp, signOut }),
+    // signIn/signUp/signOut are stable module-level functions; only user and
+    // loading actually change between renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, loading],
+  );
+
   return (
-    // eslint-disable-next-line react/jsx-no-constructed-context-values
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 };
 

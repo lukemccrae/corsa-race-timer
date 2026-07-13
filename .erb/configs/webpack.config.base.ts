@@ -3,29 +3,16 @@
  */
 
 import path from 'path';
-import fs from 'fs';
 import webpack from 'webpack';
 import TsconfigPathsPlugins from 'tsconfig-paths-webpack-plugin';
 import webpackPaths from './webpack.paths';
 import { dependencies as externals } from '../../release/app/package.json';
 
-// Load .env file if it exists and merge into process.env so EnvironmentPlugin
-// can substitute Firebase config values at build time.
-const envFile = path.resolve(__dirname, '../../.env');
-if (fs.existsSync(envFile)) {
-  const content = fs.readFileSync(envFile, 'utf-8');
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eqIdx = trimmed.indexOf('=');
-    if (eqIdx < 0) continue;
-    const key = trimmed.slice(0, eqIdx).trim();
-    const value = trimmed.slice(eqIdx + 1).trim();
-    if (key && !(key in process.env)) {
-      process.env[key] = value;
-    }
-  }
-}
+// Load .env file (if present) into process.env so EnvironmentPlugin can
+// substitute Firebase config values at build time.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const dotenv = require('dotenv');
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const configuration: webpack.Configuration = {
   externals: [...Object.keys(externals || {})],
