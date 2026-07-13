@@ -2,6 +2,7 @@ import {
   createContext,
   FC,
   PropsWithChildren,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -39,24 +40,21 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     await signInWithEmailAndPassword(firebaseAuth, email, password);
-  };
+  }, []);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string) => {
     await createUserWithEmailAndPassword(firebaseAuth, email, password);
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await firebaseSignOut(firebaseAuth);
-  };
+  }, []);
 
   const value = useMemo(
     () => ({ user, loading, signIn, signUp, signOut }),
-    // signIn/signUp/signOut are stable module-level functions; only user and
-    // loading actually change between renders.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, loading],
+    [user, loading, signIn, signUp, signOut],
   );
 
   return (
