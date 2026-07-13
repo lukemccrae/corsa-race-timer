@@ -2,10 +2,30 @@
  * Base webpack config used across other specific configs
  */
 
+import path from 'path';
+import fs from 'fs';
 import webpack from 'webpack';
 import TsconfigPathsPlugins from 'tsconfig-paths-webpack-plugin';
 import webpackPaths from './webpack.paths';
 import { dependencies as externals } from '../../release/app/package.json';
+
+// Load .env file if it exists and merge into process.env so EnvironmentPlugin
+// can substitute Firebase config values at build time.
+const envFile = path.resolve(__dirname, '../../.env');
+if (fs.existsSync(envFile)) {
+  const content = fs.readFileSync(envFile, 'utf-8');
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx < 0) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    const value = trimmed.slice(eqIdx + 1).trim();
+    if (key && !(key in process.env)) {
+      process.env[key] = value;
+    }
+  }
+}
 
 const configuration: webpack.Configuration = {
   externals: [...Object.keys(externals || {})],
@@ -48,7 +68,17 @@ const configuration: webpack.Configuration = {
     plugins: [new TsconfigPathsPlugins()],
   },
 
-  plugins: [new webpack.EnvironmentPlugin({ NODE_ENV: 'production' })],
+  plugins: [
+    new webpack.EnvironmentPlugin({
+      NODE_ENV: 'production',
+      FIREBASE_API_KEY: '',
+      FIREBASE_AUTH_DOMAIN: '',
+      FIREBASE_PROJECT_ID: '',
+      FIREBASE_STORAGE_BUCKET: '',
+      FIREBASE_MESSAGING_SENDER_ID: '',
+      FIREBASE_APP_ID: '',
+    }),
+  ],
 };
 
 export default configuration;
