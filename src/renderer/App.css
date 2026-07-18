@@ -74,6 +74,8 @@ a:hover {
 }
 
 .app-banner {
+  position: relative;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -197,7 +199,7 @@ a:hover {
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(27, 38, 56, 0.96);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.34);
-  z-index: 20;
+  z-index: 1000;
 }
 
 .profile-menu-item {
