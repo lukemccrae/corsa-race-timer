@@ -288,7 +288,7 @@ a:hover {
 
 .race-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   padding: 6px;
   margin-top: 6px;
@@ -318,6 +318,30 @@ a:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.36);
   color: #fff;
+}
+
+.race-tab-button-race-day {
+  color: #ffe6b6;
+  border-color: rgba(255, 183, 77, 0.34);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 166, 0, 0.18) 0%,
+    rgba(255, 95, 109, 0.2) 100%
+  );
+}
+
+.race-tab-button-race-day:hover {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 166, 0, 0.28) 0%,
+    rgba(255, 95, 109, 0.3) 100%
+  );
+}
+
+.race-tab-button-race-day-active {
+  color: #fff;
+  border-color: rgba(255, 204, 112, 0.78);
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 151, 0.34);
 }
 
 .race-workspace-header h3,
@@ -457,8 +481,31 @@ a:hover {
 }
 
 .time-race-panel,
+.race-day-panel,
 .race-settings-panel {
   margin-top: 18px;
+}
+
+.race-day-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.race-day-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.race-day-wide-field {
+  grid-column: span 3;
+}
+
+.race-day-table {
+  min-width: 940px;
 }
 
 .time-race-toolbar {
@@ -614,5 +661,13 @@ a:hover {
   .panel-actions button,
   .time-race-toolbar button {
     flex: 1;
+  }
+
+  .race-day-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .race-day-wide-field {
+    grid-column: span 1;
   }
 }

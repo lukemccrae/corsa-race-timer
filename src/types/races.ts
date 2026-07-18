@@ -33,6 +33,44 @@ export type RaceTimingEntry = {
   description: string;
 };
 
+export type RaceMatCrossing = {
+  id: string;
+  raceId: string;
+  bib: string;
+  age: string;
+  firstName: string;
+  lastName: string;
+  gender: string;
+  crossingTime: string;
+  city: string;
+  state: string;
+  country: string;
+  raceDistance: string;
+};
+
+export type AddRaceMatCrossingInput = {
+  raceId: string;
+  bib?: string;
+  age?: string;
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  crossingTime?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  raceDistance?: string;
+};
+
+export type SeedRaceCrossingsInput = {
+  raceId: string;
+  limit?: number;
+};
+
+export type SeedRaceCrossingsResult = {
+  seededCount: number;
+};
+
 export type UpdateRaceInput = {
   raceId: string;
   name?: string;

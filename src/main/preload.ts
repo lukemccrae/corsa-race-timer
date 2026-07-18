@@ -2,10 +2,14 @@
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import type {
+  AddRaceMatCrossingInput,
   CreateRaceInput,
   CsvImportPayload,
   RaceEntryRow,
+  RaceMatCrossing,
   RaceSummary,
+  SeedRaceCrossingsInput,
+  SeedRaceCrossingsResult,
   UpdateRaceInput,
 } from '../types/races';
 import { IPC_CHANNELS } from '../shared/raceIpc';
@@ -31,6 +35,12 @@ const electronHandler = {
     },
   },
   races: {
+    addRaceMatCrossing(input: AddRaceMatCrossingInput) {
+      return ipcRenderer.invoke(
+        IPC_CHANNELS.addRaceMatCrossing,
+        input,
+      ) as Promise<RaceMatCrossing>;
+    },
     createRace(input?: CreateRaceInput) {
       return ipcRenderer.invoke(
         IPC_CHANNELS.createRace,
@@ -46,11 +56,23 @@ const electronHandler = {
     listRaces() {
       return ipcRenderer.invoke(IPC_CHANNELS.listRaces) as Promise<RaceSummary[]>;
     },
+    listRaceMatCrossings(raceId: string) {
+      return ipcRenderer.invoke(
+        IPC_CHANNELS.listRaceMatCrossings,
+        raceId,
+      ) as Promise<RaceMatCrossing[]>;
+    },
     listRaceRows(raceId: string) {
       return ipcRenderer.invoke(
         IPC_CHANNELS.listRaceRows,
         raceId,
       ) as Promise<RaceEntryRow[]>;
+    },
+    seedRaceCrossings(input: SeedRaceCrossingsInput) {
+      return ipcRenderer.invoke(
+        IPC_CHANNELS.seedRaceCrossings,
+        input,
+      ) as Promise<SeedRaceCrossingsResult>;
     },
     updateRace(input: UpdateRaceInput) {
       return ipcRenderer.invoke(

@@ -6,22 +6,25 @@ import { AuthProvider, useAuth } from './AuthContext';
 import {
   createRaceSummary,
   importRaceCsv,
+  listRaceMatCrossings,
   listRaceRows,
   listRaceSummaries,
   readRaceSummaries,
   readSelectedRaceId,
+  seedRaceCrossings,
   updateRaceSummary,
   writeSelectedRaceId,
 } from './races';
 import SignIn from './SignIn';
 import type {
   RaceEntryRow,
+  RaceMatCrossing,
   RaceSummary,
   RaceTimingDevice,
   RaceTimingEntry,
 } from '../types/races';
 
-type RaceTab = 'entrants' | 'timing' | 'settings';
+type RaceTab = 'entrants' | 'timing' | 'raceDay' | 'settings';
 
 function toDateTimeLocalValue(value: string | null) {
   if (!value) {
@@ -203,7 +206,9 @@ function Home() {
   const [isLoadingRaceRows, setIsLoadingRaceRows] = useState(false);
   const [isSavingRaceSettings, setIsSavingRaceSettings] = useState(false);
   const [isSavingTimingConfig, setIsSavingTimingConfig] = useState(false);
+  const [isLoadingRaceDayLog, setIsLoadingRaceDayLog] = useState(false);
   const [selectedRaceRows, setSelectedRaceRows] = useState<RaceEntryRow[]>([]);
+  const [raceDayCrossings, setRaceDayCrossings] = useState<RaceMatCrossing[]>([]);
   const [settingsDraft, setSettingsDraft] = useState({
     name: '',
     startTime: '',
@@ -213,6 +218,7 @@ function Home() {
   const [timingEntriesDraft, setTimingEntriesDraft] = useState<RaceTimingEntry[]>([]);
   const [raceMessage, setRaceMessage] = useState<string | null>(null);
   const [raceError, setRaceError] = useState<string | null>(null);
+  const [seededRaceIds, setSeededRaceIds] = useState<Record<string, true>>({});
 
   const selectedRace = useMemo(
     () => races.find((race) => race.id === selectedRaceId) ?? null,
@@ -250,6 +256,101 @@ function Home() {
     };
 
     hydrateRaces();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedRaceId]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const maybeSeedCrossings = async () => {
+      if (
+        activeTab !== 'raceDay' ||
+        !selectedRaceId ||
+        isLoadingRaceDayLog ||
+        selectedRaceRows.length === 0 ||
+        raceDayCrossings.length > 0 ||
+        seededRaceIds[selectedRaceId]
+      ) {
+        return;
+      }
+
+      try {
+        const result = await seedRaceCrossings({ raceId: selectedRaceId });
+
+        if (isCancelled || result.seededCount === 0) {
+          return;
+        }
+
+        const refreshedCrossings = await listRaceMatCrossings(selectedRaceId);
+        if (isCancelled) {
+          return;
+        }
+
+        setRaceDayCrossings(refreshedCrossings);
+        setSeededRaceIds((currentValue) => ({
+          ...currentValue,
+          [selectedRaceId]: true,
+        }));
+        setRaceMessage(`Seeded ${result.seededCount} crossings.`);
+      } catch (error) {
+        if (!isCancelled) {
+          setRaceError(
+            error instanceof Error ? error.message : 'Unable to seed crossings.',
+          );
+        }
+      }
+    };
+
+    maybeSeedCrossings();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    activeTab,
+    isLoadingRaceDayLog,
+    raceDayCrossings.length,
+    seededRaceIds,
+    selectedRaceId,
+    selectedRaceRows.length,
+  ]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const hydrateRaceDayCrossings = async () => {
+      if (!selectedRaceId) {
+        setRaceDayCrossings([]);
+        return;
+      }
+
+      setIsLoadingRaceDayLog(true);
+
+      try {
+        const crossings = await listRaceMatCrossings(selectedRaceId);
+        if (!isCancelled) {
+          setRaceDayCrossings(crossings);
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setRaceDayCrossings([]);
+          setRaceError(
+            error instanceof Error
+              ? error.message
+              : 'Unable to load race day crossings right now.',
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingRaceDayLog(false);
+        }
+      }
+    };
+
+    hydrateRaceDayCrossings();
 
     return () => {
       isCancelled = true;
@@ -562,6 +663,8 @@ function Home() {
       ? 'Entrants'
       : activeTab === 'timing'
         ? 'Timing'
+        : activeTab === 'raceDay'
+          ? 'Race Day'
         : 'Settings';
   const raceDetailContent = selectedRace ? (
     <>
@@ -598,6 +701,19 @@ function Home() {
           onClick={() => setActiveTab('settings')}
         >
           Settings
+        </button>
+                <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'raceDay'}
+          className={
+            activeTab === 'raceDay'
+              ? 'race-tab-button race-tab-button-race-day race-tab-button-active race-tab-button-race-day-active'
+              : 'race-tab-button race-tab-button-race-day'
+          }
+          onClick={() => setActiveTab('raceDay')}
+        >
+          Race Day
         </button>
       </div>
 
@@ -849,6 +965,59 @@ function Home() {
               {isSavingTimingConfig ? 'Saving...' : 'Save Timing Setup'}
             </button>
           </div>
+        </div>
+      ) : null}
+
+      {activeTab === 'raceDay' ? (
+        <div className="race-day-panel">
+          <div className="race-day-toolbar">
+            <p className="race-empty-state">
+              Race Day is a table view of Crossings.
+            </p>
+          </div>
+
+          {isLoadingRaceDayLog ? (
+            <p className="race-empty-state">Loading race day log...</p>
+          ) : raceDayCrossings.length === 0 ? (
+            <p className="race-empty-state">
+              No crossings logged yet. Start logging runners as they hit the mat.
+            </p>
+          ) : (
+            <div className="race-table-wrap">
+              <table className="race-table race-day-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Bib</th>
+                    <th scope="col">Age</th>
+                    <th scope="col">First Name</th>
+                    <th scope="col">Last Name</th>
+                    <th scope="col">Gender</th>
+                    <th scope="col">Crossing Time</th>
+                    <th scope="col">City</th>
+                    <th scope="col">State</th>
+                    <th scope="col">Country</th>
+                    <th scope="col">Race Distance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {raceDayCrossings.map((crossing) => (
+                    <tr key={crossing.id}>
+                      <td>{crossing.bib || '-'}</td>
+                      <td>{crossing.age || '-'}</td>
+                      <td>{crossing.firstName || '-'}</td>
+                      <td>{crossing.lastName || '-'}</td>
+                      <td>{crossing.gender || '-'}</td>
+                      <td>{new Date(crossing.crossingTime).toLocaleString()}</td>
+                      <td>{crossing.city || '-'}</td>
+                      <td>{crossing.state || '-'}</td>
+                      <td>{crossing.country || '-'}</td>
+                      <td>{crossing.raceDistance || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       ) : null}
 

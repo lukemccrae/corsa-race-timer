@@ -1,8 +1,12 @@
 import type {
+  AddRaceMatCrossingInput,
   CreateRaceInput,
   CsvImportPayload,
   RaceEntryRow,
+  RaceMatCrossing,
   RaceSummary,
+  SeedRaceCrossingsInput,
+  SeedRaceCrossingsResult,
   UpdateRaceInput,
 } from '../types/races';
 
@@ -139,6 +143,23 @@ export async function createRaceSummary(input?: CreateRaceInput) {
 export async function listRaceRows(raceId: string) {
   const raceBridge = requireRaceBridge();
   return raceBridge.listRaceRows(raceId);
+}
+
+export async function listRaceMatCrossings(raceId: string) {
+  const raceBridge = requireRaceBridge();
+  return raceBridge.listRaceMatCrossings(raceId) as Promise<RaceMatCrossing[]>;
+}
+
+export async function addRaceMatCrossing(input: AddRaceMatCrossingInput) {
+  const raceBridge = requireRaceBridge();
+  return raceBridge.addRaceMatCrossing(input) as Promise<RaceMatCrossing>;
+}
+
+export async function seedRaceCrossings(
+  input: SeedRaceCrossingsInput,
+) {
+  const raceBridge = requireRaceBridge();
+  return raceBridge.seedRaceCrossings(input) as Promise<SeedRaceCrossingsResult>;
 }
 
 export async function importRaceCsv(raceId: string, fileText: string) {
