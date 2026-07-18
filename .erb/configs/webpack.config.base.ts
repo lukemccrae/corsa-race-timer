@@ -63,6 +63,8 @@ const configuration: webpack.Configuration = {
       FIREBASE_STORAGE_BUCKET: '',
       FIREBASE_MESSAGING_SENDER_ID: '',
       FIREBASE_APP_ID: '',
+      APPSYNC_ENDPOINT: '',
+      CLOUDFRONT_PHOTO_URL: '',
     }),
   ],
 };
